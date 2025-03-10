@@ -1,4 +1,5 @@
 import logging
+import asyncio
 from datetime import datetime, timedelta
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.mongodb import MongoDBJobStore
@@ -76,3 +77,67 @@ async def shutdown_scheduler():
     if scheduler.running:
         scheduler.shutdown()
         logger.info("Scheduler shut down")
+
+
+class SchedulerManager:
+    """مدیریت زمان‌بند وظایف"""
+    
+    def __init__(self, scheduler_instance):
+        self.scheduler = scheduler_instance
+    
+    def is_running(self):
+        """بررسی وضعیت اجرای زمان‌بند"""
+        return self.scheduler.running if self.scheduler else False
+    
+    def get_jobs(self):
+        """دریافت لیست کارهای زمان‌بند"""
+        if not self.scheduler or not self.scheduler.running:
+            return []
+        
+        jobs = []
+        for job in self.scheduler.get_jobs():
+            jobs.append({
+                "id": job.id,
+                "name": job.name,
+                "next_run_time": job.next_run_time.isoformat() if job.next_run_time else None,
+                "func": f"{job.func.__module__}.{job.func.__name__}",
+                "trigger": str(job.trigger),
+                "paused": job.next_run_time is None
+            })
+        
+        return jobs
+    
+    def get_status(self):
+        """دریافت وضعیت زمان‌بند"""
+        return {
+            "running": self.is_running(),
+            "job_count": len(self.get_jobs()) if self.is_running() else 0,
+            "scheduler_type": "AsyncIOScheduler"
+        }
+    
+    def pause_job(self, job_id):
+        """توقف موقت یک کار"""
+        if not self.scheduler or not self.scheduler.running:
+            return False
+        
+        job = self.scheduler.get_job(job_id)
+        if not job:
+            return False
+        
+        self.scheduler.pause_job(job_id)
+        return True
+    
+    def resume_job(self, job_id):
+        """ازسرگیری یک کار"""
+        if not self.scheduler or not self.scheduler.running:
+            return False
+        
+        job = self.scheduler.get_job(job_id)
+        if not job:
+            return False
+        
+        self.scheduler.resume_job(job_id)
+        return True
+
+# نمونه سینگلتون از مدیر زمان‌بند
+scheduler_manager = SchedulerManager(scheduler)

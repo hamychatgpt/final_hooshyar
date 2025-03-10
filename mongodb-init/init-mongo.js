@@ -1,9 +1,9 @@
 // اسکریپت راه‌اندازی اولیه پایگاه داده MongoDB
 
-// دریافت نام کاربری، رمز عبور و نام دیتابیس از متغیرهای محیطی
-const adminUser = process.env.MONGO_INITDB_ROOT_USERNAME || 'admin';
-const adminPassword = process.env.MONGO_INITDB_ROOT_PASSWORD || 'password';
-const dbName = process.env.MONGO_INITDB_DATABASE || 'twitter_monitor';
+// تعریف متغیرهای مورد نیاز
+const adminUser = 'admin';
+const adminPassword = 'password';
+const dbName = 'hooshyar';
 
 // ایجاد کاربر برنامه با دسترسی به دیتابیس اصلی
 db.auth(adminUser, adminPassword);
@@ -60,21 +60,6 @@ db.keywords.createIndex({ "keyword": 1 }, { unique: true });
 db.keywords.createIndex({ "is_active": 1 });
 db.keywords.createIndex({ "priority": 1 });
 db.keywords.createIndex({ "last_extracted_at": 1 });
-
-// ایجاد ایندکس‌های کالکشن system_settings
-db.system_settings.createIndex({ "key": 1 }, { unique: true });
-
-// ایجاد ایندکس‌های کالکشن execution_logs
-db.execution_logs.createIndex({ "task_name": 1 });
-db.execution_logs.createIndex({ "start_time": -1 });
-db.execution_logs.createIndex({ "status": 1 });
-
-// ایجاد ایندکس‌های کالکشن migrations
-db.migrations.createIndex({ "version": 1 }, { unique: true });
-
-// ایجاد ایندکس‌های کالکشن system_stats
-db.system_stats.createIndex({ "date": 1 }, { unique: true });
-db.system_stats.createIndex({ "timestamp": -1 });
 
 print('ایندکس‌های مورد نیاز با موفقیت ایجاد شدند.');
 

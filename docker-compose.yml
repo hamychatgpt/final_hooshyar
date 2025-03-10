@@ -3,13 +3,13 @@ version: '3.8'
 services:
   # سرویس MongoDB
   mongodb:
-    image: mongo:5.0
+    image: mongo:4.4
     container_name: twitter-monitor-mongodb
-    restart: unless-stopped
+    restart: always
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USER:-admin}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD:-password}
-      - MONGO_INITDB_DATABASE=${MONGODB_DB:-twitter_monitor}
+      - MONGO_INITDB_DATABASE=${MONGODB_DB:-hooshyar}
     ports:
       - "27017:27017"
     volumes:
@@ -17,17 +17,13 @@ services:
       - ./mongodb-init:/docker-entrypoint-initdb.d
     networks:
       - twitter-monitor-network
+    # حذف healthcheck یا تغییر آن به شکل زیر
     healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/admin --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
   # خدمت بک‌اند
   backend:
@@ -44,13 +40,13 @@ services:
     env_file:
       - .env
     environment:
-      - MONGODB_URI=mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-password}@mongodb:27017/${MONGODB_DB:-twitter_monitor}?authSource=admin
+      - MONGODB_URI=mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-password}@mongodb:27017/${MONGODB_DB:-hooshyar}?authSource=admin
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - DEBUG=${DEBUG:-true}
       - APP_START_TIME=${APP_START_TIME}
     depends_on:
       mongodb:
-        condition: service_healthy
+        condition: service_started
     networks:
       - twitter-monitor-network
     restart: unless-stopped
@@ -84,7 +80,7 @@ services:
       - BACKEND_URL=http://backend:8000
     depends_on:
       backend:
-        condition: service_healthy
+        condition: service_started
     networks:
       - twitter-monitor-network
     restart: unless-stopped
